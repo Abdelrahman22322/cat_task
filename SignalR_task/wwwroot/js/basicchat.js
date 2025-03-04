@@ -1,16 +1,34 @@
-﻿
 
-// Initialize SignalR connection to the chat hub
+var connectionChat = new signalR.HubConnectionBuilder().withUrl("/hubs/basicchat").build();
 
-// Disable send button until the connection is established
+document.getElementById("sendMessage").disabled = true;
 
-// Listen for incoming messages and display them in the message list
+connectionChat.on("MessageReceived", function (user, message) {
+    var li = document.createElement("li");
+    document.getElementById("messagesList").appendChild(li);
+    li.textContent = `${user} - ${message}`;
+});
 
-// On send button click:
-// - Get sender, receiver, and message values
-// - If a receiver exists, send a private message
-// - Otherwise, send the message to all users
+document.getElementById("sendMessage").addEventListener("click", function (event) {
+    var sender = document.getElementById("senderEmail").value;
+    var message = document.getElementById("chatMessage").value;
+    var receiver = document.getElementById("receiverEmail").value;
 
-// Start the connection and enable the send button
+    if (receiver.length > 0) {
+        connectionChat.send("SendMessageToReceiver", sender, receiver, message);
+    }
+    else {
+        //send message to all of the users
+        connectionChat.send("SendMessageToAll", sender, message).catch(function (err) {
+            return console.error(err.toString());
+        });
+    }
+    event.preventDefault();
+})
 
+
+
+connectionChat.start().then(function () {
+    document.getElementById("sendMessage").disabled = false;
+});
 
