@@ -1,4 +1,4 @@
-﻿let lbl_houseJoined = document.getElementById("lbl_houseJoined");
+let lbl_houseJoined = document.getElementById("lbl_houseJoined");
 
 
 let btn_un_gryffindor = document.getElementById("btn_un_gryffindor");
@@ -16,81 +16,143 @@ let trigger_hufflepuff = document.getElementById("trigger_hufflepuff");
 let trigger_ravenclaw = document.getElementById("trigger_ravenclaw");
 
 
-// Step 1: Establish a connection to the SignalR hub
-// Hint: Use `signalR.HubConnectionBuilder()` to create a new connection.
-// Example:
-// var connection = new signalR.HubConnectionBuilder().withUrl("/hubs/houseGroup").build();
+//create connection
+var connectionHouse = new signalR.HubConnectionBuilder()
+    //.configureLogging(signalR.LogLevel.Information)
+    .withUrl("/hubs/houseGroup").build();
+
+btn_gryffindor.addEventListener("click", function (event) {
+    connectionHouse.send("JoinHouse", "Gryffindor");
+    event.preventDefault();
+});
+btn_hufflepuff.addEventListener("click", function (event) {
+    connectionHouse.send("JoinHouse", "Hufflepuff");
+    event.preventDefault();
+});
+btn_ravenclaw.addEventListener("click", function (event) {
+    connectionHouse.send("JoinHouse", "Ravenclaw");
+    event.preventDefault();
+});
+btn_slytherin.addEventListener("click", function (event) {
+    connectionHouse.send("JoinHouse", "Slytherin");
+    event.preventDefault();
+});
 
 
-// Step 2: Handle house joining events when a user clicks a button
-// - Attach event listeners to each house button
-// - When clicked, send the house name to the server using `connection.send("JoinHouse", houseName)`
-// Example:
-// btn_house.addEventListener("click", function (event) {
-//     connection.send("JoinHouse", "HouseName");
-//     event.preventDefault();
-// });
+trigger_gryffindor.addEventListener("click", function (event) {
+    connectionHouse.send("TriggerHouseNotify", "Gryffindor");
+    event.preventDefault();
+});
+trigger_hufflepuff.addEventListener("click", function (event) {
+    connectionHouse.send("TriggerHouseNotify", "Hufflepuff");
+    event.preventDefault();
+});
+trigger_ravenclaw.addEventListener("click", function (event) {
+    connectionHouse.send("TriggerHouseNotify", "Ravenclaw");
+    event.preventDefault();
+});
+trigger_slytherin.addEventListener("click", function (event) {
+    connectionHouse.send("TriggerHouseNotify", "Slytherin");
+    event.preventDefault();
+});
 
 
-// Step 3: Handle notification triggers for each house
-// - Attach event listeners to trigger buttons
-// - Send a request to notify a specific house using `connection.send("TriggerHouseNotify", houseName)`
-// Example:
-// trigger_house.addEventListener("click", function (event) {
-//     connection.send("TriggerHouseNotify", "HouseName");
-//     event.preventDefault();
-// });
+
+btn_un_gryffindor.addEventListener("click", function (event) {
+    connectionHouse.send("LeaveHouse", "Gryffindor");
+    event.preventDefault();
+});
+btn_un_hufflepuff.addEventListener("click", function (event) {
+    connectionHouse.send("LeaveHouse", "Hufflepuff");
+    event.preventDefault();
+});
+btn_un_ravenclaw.addEventListener("click", function (event) {
+    connectionHouse.send("LeaveHouse", "Ravenclaw");
+    event.preventDefault();
+});
+btn_un_slytherin.addEventListener("click", function (event) {
+    connectionHouse.send("LeaveHouse", "Slytherin");
+    event.preventDefault();
+});
+
+connectionHouse.on("triggerHouseNotification", (houseName) => {
+    toastr.success(`A new notification for ${houseName} has been launched.`);
+});
+
+connectionHouse.on("newMemberAddedToHouse", (houseName) => {
+    toastr.success(`Member has subscribed to ${houseName}`);
+});
+
+connectionHouse.on("newMemberRemovedFromHouse", (houseName) => {
+    toastr.warning(`Member has unsubscribed from ${houseName}`);
+});
+
+connectionHouse.on("subscriptionStatus", (strGroupsJoined, houseName, hasSubscribed) => {
+    lbl_houseJoined.innerText = strGroupsJoined;
+
+    if (hasSubscribed) {
+        //subscribe to
+
+        switch (houseName) {
+            case 'slytherin':
+                btn_slytherin.style.display = "none";
+                btn_un_slytherin.style.display = "";
+                break;
+            case 'gryffindor':
+                btn_gryffindor.style.display = "none";
+                btn_un_gryffindor.style.display = "";
+                break;
+            case 'hufflepuff':
+                btn_hufflepuff.style.display = "none";
+                btn_un_hufflepuff.style.display = "";
+                break;
+            case 'ravenclaw':
+                btn_ravenclaw.style.display = "none";
+                btn_un_ravenclaw.style.display = "";
+                break;
+            default:
+                break;
+        }
+
+        toastr.success(`You have Subscribed Successfully. ${houseName}`);
+    }
+    else {
+        //unsubscribe
+        switch (houseName) {
+            case 'slytherin':
+                btn_slytherin.style.display = "";
+                btn_un_slytherin.style.display = "none";
+                break;
+            case 'gryffindor':
+                btn_gryffindor.style.display = "";
+                btn_un_gryffindor.style.display = "none";
+                break;
+            case 'hufflepuff':
+                btn_hufflepuff.style.display = "";
+                btn_un_hufflepuff.style.display = "none";
+                break;
+            case 'ravenclaw':
+                btn_ravenclaw.style.display = "";
+                btn_un_ravenclaw.style.display = "none";
+                break;
+            default:
+                break;
+        }
+
+        toastr.success(`You have Unsubscribed Successfully. ${houseName}`);
+    }
+
+})
 
 
-// Step 4: Handle leaving a house
-// - Attach event listeners to 'leave' buttons
-// - When clicked, send the house name to the server using `connection.send("LeaveHouse", houseName)`
-// Example:
-// btn_un_house.addEventListener("click", function (event) {
-//     connection.send("LeaveHouse", "HouseName");
-//     event.preventDefault();
-// });
 
+//start connection
+function fulfilled() {
+    //do something on start
+    console.log("Connection to User Hub Successful");
+}
+function rejected() {
+    //rejected logs
+}
 
-// Step 5: Handle incoming events from the server
-// - Listen for `triggerHouseNotification` and display a success message
-// - Listen for `newMemberAddedToHouse` and `newMemberRemovedFromHouse` and update UI accordingly
-// Hint: Use `connection.on(eventName, callbackFunction)`
-// Example:
-// connection.on("triggerHouseNotification", (houseName) => {
-//     toastr.success(`A new notification for ${houseName} has been launched.`);
-// });
-
-
-// Step 6: Manage subscription status
-// - Update UI based on the subscription status received from the server
-// - Show or hide join/leave buttons accordingly
-// - Use a switch statement to handle each house separately
-// Example:
-// connection.on("subscriptionStatus", (strGroupsJoined, houseName, hasSubscribed) => {
-//     if (hasSubscribed) {
-//         // Hide join button and show leave button
-//     } else {
-//         // Show join button and hide leave button
-//     }
-// });
-
-
-// Step 7: Start the connection
-// - Use `connection.start().then(fulfilled, rejected);`
-// - Define what happens on success and failure
-// Example:
-// function fulfilled() {
-//     console.log("Connection established.");
-// }
-// function rejected() {
-//     console.log("Connection failed.");
-// }
-// connection.start().then(fulfilled, rejected);
-
-
-// Hints:
-// - Use `toastr.success()` and `toastr.warning()` for notifications.
-// - Use `addEventListener()` to handle button clicks.
-// - Use `connection.send(methodName, argument)` to send data to the server.
-// - Use `connection.on(eventName, callback)` to listen for messages from the server.
+connectionHouse.start().then(fulfilled, rejected);
